@@ -1,6 +1,6 @@
 # Code Edit Bench
 
-This repository contains code to generate a dataset of commits from top rated (based on number of stars) repositories on Git that are based on 14 different languages. This will serve as a benchmark for code editing tasks.
+This repository contains code to generate a dataset of commits from top rated (based on number of stars) repositories on GitHub that are based on 14 different languages. This will serve as a benchmark for code editing tasks.
 
 ## Directory Structure
 **Data** <br> 
