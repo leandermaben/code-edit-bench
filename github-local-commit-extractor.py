@@ -221,7 +221,8 @@ class LocalGitExtractor:
             'commit_count': commit_count,
             'start_date': start_date,
             'end_date': end_date,
-            'language': lang
+            'language': lang,
+            'commit_count':commit_count
         }
         self.metadata['total_commits'] += commit_count
         
