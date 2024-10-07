@@ -245,14 +245,16 @@ class LocalGitExtractor:
             json.dump(self.metadata, f, indent=2)
 
     def cleanup(self, full_repo_name: str=None):
-        logger.info(f"Cleaning up repositories directory: {self.repos_dir}")
         if full_repo_name:
             repo_name = full_repo_name.split('/')[-1]
             local_path = self.repos_dir / repo_name
+            logger.info(f"Cleaning up repositories directory: {local_path}")
             if local_path.exists():
                 shutil.rmtree(local_path)
         else:
-            shutil.rmtree(self.repos_dir)
+            logger.info(f"Cleaning up repositories directory: {self.repos_dir}")
+            if self.repos_dir.exists():
+                shutil.rmtree(self.repos_dir)
 
 def main():
     parser = argparse.ArgumentParser(description="Extract Git commit information")
@@ -282,7 +284,7 @@ def main():
         for full_repo_name, language in repositories:
             logger.info(f"Processing repository: {full_repo_name}")
             try:
-                if extractor.metadata['repositories'][full_repo_name]:
+                if full_repo_name in extractor.metadata['repositories']:
                     logger.info(f"Repository {full_repo_name} already processed. Skipping.")
                     continue
                 repo = extractor.clone_repository(full_repo_name)

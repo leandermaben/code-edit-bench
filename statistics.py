@@ -15,7 +15,7 @@ def parse_args():
 
 
 def count_tokens(text: str) -> int:
-    encoding = tiktoken.get_encoding("cl100k_base")
+    encoding = tiktoken.get_encoding("o200k_base")
     return len(encoding.encode(text))
 
 
