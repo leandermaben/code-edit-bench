@@ -250,11 +250,11 @@ class LocalGitExtractor:
             local_path = self.repos_dir / repo_name
             logger.info(f"Cleaning up repositories directory: {local_path}")
             if local_path.exists():
-                shutil.rmtree(local_path)
+                shutil.rmtree(local_path,ignore_errors=True)
         else:
             logger.info(f"Cleaning up repositories directory: {self.repos_dir}")
             if self.repos_dir.exists():
-                shutil.rmtree(self.repos_dir)
+                shutil.rmtree(self.repos_dir,ignore_errors=True)
 
 def main():
     parser = argparse.ArgumentParser(description="Extract Git commit information")
