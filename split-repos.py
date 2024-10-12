@@ -34,17 +34,18 @@ def main():
         reader = csv.DictReader(csvfile)
         for row in reader:
             if 'full_name' in row and row['full_name'].strip():
-                repositories.append(row['full_name'].strip())
+                repositories.append([row['full_name'].strip(), row['language'], row['stars']])
 
     # Split the list of repositories
     split_repos = split_list(repositories, num_files)
 
     # Write to output files
     for i, repo_list in enumerate(split_repos, 1):
-        output_file = output_dir / f"repo_list_{i}"
+        output_file = output_dir / f"repo_list_{i}.csv"
         with output_file.open('w') as f:
-            for repo in repo_list:
-                f.write(f"{repo}\n")
+            f.write("full_name,language,stars\n")
+            for full_name, language, stars in repo_list:
+                f.write(f"{full_name},{language},{stars}\n")
         print(f"Created {output_file} with {len(repo_list)} repositories")
 
     print(f"Split {len(repositories)} repositories into {num_files} files")
