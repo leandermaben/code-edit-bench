@@ -183,7 +183,7 @@ class LocalGitExtractor:
             # File doesn't exist in this commit
             return None
 
-    def get_commits(self, repo: Repo, repo_name: str, start_date: str, end_date: str, lang=None, max_commits=-1) -> List[Dict[str, Any]]:
+    def get_commits(self, repo: Repo, repo_name: str, start_date: str, end_date: str, lang=None, max_commits=-1) -> None:
         commits = []
         commit_count = 0
         file_count = 0
@@ -210,6 +210,11 @@ class LocalGitExtractor:
                     if commit_count % 100 == 0:
                         logger.info(f"Processed {commit_count} commits for {repo_name}")
 
+                    if commit_count % 500 == 0:
+                        logger.info(f"Processed {commit_count} commits for {repo_name}")
+                        self.save_commits_to_jsonl(commits, repo_name)
+                        commits = []
+
                     if max_commits!=-1 and commit_count  == max_commits:
                         logger.info(f"Processed {commit_count} commits for {repo_name}.Stopping now.")
                         break
@@ -217,6 +222,9 @@ class LocalGitExtractor:
                     logger.error(f"Error processing commit {commit.hexsha}: {e}")
         except Exception as e:
             logger.error(f"Error iterating commits for {repo_name}: {e}")
+
+        if len(commits) > 0:
+            self.save_commits_to_jsonl(commits, repo_name)
         
         # Update metadata
         self.metadata['repositories'][repo_name] = {
@@ -227,8 +235,8 @@ class LocalGitExtractor:
             'file_count':file_count
         }
         self.metadata['total_commits'] += commit_count
-        
-        return commits
+        return commit_count
+
 
     def save_commits_to_jsonl(self, commits: List[Dict[str, Any]], repo_name: str):
         if not commits:
@@ -237,7 +245,7 @@ class LocalGitExtractor:
         
         output_file = self.output_dir / f"{repo_name.replace('/', '_')}_commits.jsonl"
         
-        with open(output_file, 'w', encoding='utf-8') as jsonl_file:
+        with open(output_file, 'a', encoding='utf-8') as jsonl_file:
             for commit in commits:
                 jsonl_file.write(json.dumps(commit) + '\n')
 
@@ -290,9 +298,8 @@ def main():
                     logger.info(f"Repository {full_repo_name} already processed. Skipping.")
                     continue
                 repo = extractor.clone_repository(full_repo_name)
-                commits = extractor.get_commits(repo, full_repo_name, args.start_date, args.end_date, language, args.max_commit_per_repo)
-                extractor.save_commits_to_jsonl(commits, full_repo_name)
-                logger.info(f"Found and saved {len(commits)} commits for {full_repo_name}")
+                commit_count = extractor.get_commits(repo, full_repo_name, args.start_date, args.end_date, language, args.max_commit_per_repo)
+                logger.info(f"Found and saved {commit_count} commits for {full_repo_name}")
                 extractor.save_metadata()
                 logger.info(f"Saved metadata to {args.output_dir}/metadata.json")
             except Exception as e:
