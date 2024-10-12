@@ -186,6 +186,7 @@ class LocalGitExtractor:
     def get_commits(self, repo: Repo, repo_name: str, start_date: str, end_date: str, lang=None, max_commits=-1) -> List[Dict[str, Any]]:
         commits = []
         commit_count = 0
+        file_count = 0
         
         # Convert dates to datetime objects
         start = datetime.fromisoformat(start_date)
@@ -204,6 +205,7 @@ class LocalGitExtractor:
                     commit_data['repo'] = repo_name
                     commits.append(commit_data)
                     commit_count += 1
+                    file_count += len(commit_data['files'])
                     
                     if commit_count % 100 == 0:
                         logger.info(f"Processed {commit_count} commits for {repo_name}")
@@ -222,7 +224,7 @@ class LocalGitExtractor:
             'start_date': start_date,
             'end_date': end_date,
             'language': lang,
-            'commit_count':commit_count
+            'file_count':file_count
         }
         self.metadata['total_commits'] += commit_count
         
