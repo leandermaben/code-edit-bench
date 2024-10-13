@@ -9,11 +9,16 @@ from pathlib import Path
 import logging
 import shutil
 import csv
+import gc
 
 # Set up logging
 logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def force_garbage_collection():
+    gc.collect()
+    gc.collect()
 
 class LocalGitExtractor:
     def __init__(self, output_dir: str, repos_dir: str):
@@ -209,11 +214,12 @@ class LocalGitExtractor:
                     
                     if commit_count % 100 == 0:
                         logger.info(f"Processed {commit_count} commits for {repo_name}")
-
-                    if commit_count % 500 == 0:
-                        logger.info(f"Processed {commit_count} commits for {repo_name}")
+                        force_garbage_collection()
+                        
+                    if commit_count % 1 == 0:
                         self.save_commits_to_jsonl(commits, repo_name)
                         commits = []
+                        force_garbage_collection()
 
                     if max_commits!=-1 and commit_count  == max_commits:
                         logger.info(f"Processed {commit_count} commits for {repo_name}.Stopping now.")
@@ -307,11 +313,13 @@ def main():
             finally:
                 # Cleanup repository
                 extractor.cleanup(full_repo_name)
+                force_garbage_collection()
         extractor.save_metadata()
         logger.info(f"Saved metadata to {args.output_dir}/metadata.json")
     finally:
         # Cleanup repositories to save disk space
         extractor.cleanup()
+        force_garbage_collection()
 
 if __name__ == "__main__":
     main()
