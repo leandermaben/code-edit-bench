@@ -10,7 +10,6 @@ def consolidate_results(input_dirs, output_dir):
 
     consolidated_metadata = {
         'repositories': {},
-        'export_date': None,
         'total_commits': 0
     }
 
@@ -24,9 +23,6 @@ def consolidate_results(input_dirs, output_dir):
                 metadata = json.load(f)
                 consolidated_metadata['repositories'].update(metadata['repositories'])
                 consolidated_metadata['total_commits'] += metadata['total_commits']
-                if consolidated_metadata['export_date'] is None or metadata['export_date'] > consolidated_metadata[
-                    'export_date']:
-                    consolidated_metadata['export_date'] = metadata['export_date']
 
         # Move JSONL files
         for jsonl_file in input_path.glob('*.jsonl'):

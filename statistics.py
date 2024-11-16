@@ -5,7 +5,7 @@ import numpy as np
 import argparse
 from pathlib import Path
 from typing import List, Dict
-
+import gc
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Calculate statistics for JSONL files")
@@ -14,9 +14,34 @@ def parse_args():
     return parser.parse_args()
 
 
-def count_tokens(text: str) -> int:
+def clean_text(text):
+    # Remove or replace surrogate characters
+    return text.encode('utf-8', 'ignore').decode('utf-8')
+
+def count_tokens(text, max_chunk_size=10000):
     encoding = tiktoken.get_encoding("o200k_base")
-    return len(encoding.encode(text))
+    total_tokens = 0
+    
+    # Process text in chunks
+    for i in range(0, len(text), max_chunk_size):
+        chunk = text[i:i + max_chunk_size]
+        try:
+            tokens = encoding.encode(clean_text(chunk), disallowed_special=())
+            total_tokens += len(tokens)
+        except Exception as e:
+            print(f"Warning: Error processing chunk {i}: {e}")
+            # Optional: use a simpler fallback method
+            total_tokens += len(chunk.split())  # rough approximation
+            
+    return total_tokens
+
+# def count_tokens(text: str) -> int:
+#     encoding = tiktoken.get_encoding("o200k_base")
+#     try:
+#         return len(encoding.encode(clean_text(text), disallowed_special=()))
+#     except Exception as e:
+#         print(f"Error encoding text: {e}")
+#         return len(text.split())
 
 
 def count_lines(text: str) -> int:
@@ -25,19 +50,20 @@ def count_lines(text: str) -> int:
 
 def calculate_stats(values: List[int]) -> Dict[str, float]:
     return {
-        "total": sum(values),
-        "mean": np.mean(values),
-        "std": np.std(values),
-        "min": np.min(values),
-        "25%": np.percentile(values, 25),
-        "50%": np.percentile(values, 50),
-        "75%": np.percentile(values, 75),
-        "max": np.max(values)
+        "total": float(sum(values)),
+        "mean": float(np.mean(values)),
+        "std": float(np.std(values)),
+        "min": float(np.min(values)),
+        "25%": float(np.percentile(values, 25)),
+        "50%": float(np.percentile(values, 50)),
+        "75%": float(np.percentile(values, 75)),
+        "max": float(np.max(values))
     }
 
 
 def process_jsonl_file(file_path: Path) -> pd.DataFrame:
     data = []
+    lines_processed = 0
     with file_path.open('r') as f:
         for line in f:
             commit = json.loads(line)
@@ -47,13 +73,16 @@ def process_jsonl_file(file_path: Path) -> pd.DataFrame:
                 patch = file.get('patch', '')
 
                 data.append({
-                    'current_tokens': count_tokens(current_content),
-                    'current_lines': count_lines(current_content),
-                    'previous_tokens': count_tokens(previous_content),
-                    'previous_lines': count_lines(previous_content),
-                    'patch_tokens': count_tokens(patch),
-                    'patch_lines': count_lines(patch)
+                    'current_tokens': count_tokens(current_content) if current_content else 0,
+                    'current_lines': count_lines(current_content) if current_content else 0,
+                    'previous_tokens': count_tokens(previous_content) if previous_content else 0,
+                    'previous_lines': count_lines(previous_content) if previous_content else 0,
+                    'patch_tokens': count_tokens(patch) if patch else 0,
+                    'patch_lines': count_lines(patch) if patch else 0
                 })
+            lines_processed+=1
+            if lines_processed % 100 ==0:
+                gc.collect()
 
     return pd.DataFrame(data)
 
@@ -71,6 +100,11 @@ def main():
         all_data.append(df)
 
     combined_df = pd.concat(all_data, ignore_index=True)
+    
+    for data_item in all_data:
+        del data_item
+        
+    gc.collect()
 
     stats = {
         'current_content': {
