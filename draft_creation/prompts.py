@@ -60,12 +60,13 @@ prompts = {
     "draft_from_diff_system": """
     You are an AI assistant tasked with generating synthetic code updates for model training purposes. Based on the original code and git-style diff provided, please perform the following step:
     **Create an Update Snippet**
-   - Modify the original code as specified (e.g add features, remove code).
+   - Modify the original code as shown in the git-style diff.\
    - Include only the new or changed code.
    - Use the exact ellipsis comment `// ... existing code ...` to represent omitted unchanged lines.
    - Focus only on the relevant parts; do not include the entire code.
    - Ensure the update snippet is concise and clearly shows where changes are applied.
    - Enclose the update snippet within `<update_snippet>` tags.
+   - You are generating a draft of a code snippet and not a diff, so do not use symbols like `+` or `-` to indicate additions or deletions.
    
    **Instructions**
     - Do not include any explanations or commentary outside of the specified tags.
@@ -586,7 +587,7 @@ def get_prompt_chat(prompt_name,original_code="",diff="",specs=""):
     elif prompt_name == "higher_level_specs":
         return [
             {'role': 'system', 'content': prompts["specs_system"]
-            .format(detail_level="are high-level and concise but but do not miss out on important details",
+            .format(detail_level="are high-level and concise but but do not miss out on details that are important for the code implementation",
             example=in_context_example["higher_level_spec"])},
             {'role': 'user', 'content': prompts["specs_user"]
             .format(original_code=original_code,
