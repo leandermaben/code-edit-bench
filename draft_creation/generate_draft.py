@@ -12,10 +12,10 @@ client = OpenAI(
     base_url=openai_api_base,
 )
 
-def get_draft_from_diff(original_file_content, patch):
+def get_draft_from_diff(original_file_content, patch, model=MODEL):
     messages = get_prompt_chat('draft_from_diff', original_file_content, patch)
     draft = client.chat.completions.create(
-            model=MODEL,
+            model=model,
             messages=messages
         )
     return draft.choices[0].message.content

@@ -1,4 +1,6 @@
 import tiktoken
+import time
+from openai import OpenAI
 
 def clean_text(text):
     # Remove or replace surrogate characters
@@ -24,3 +26,26 @@ def count_tokens(text, max_chunk_size=10000):
             total_tokens += len(chunk.split())  # rough approximation
             
     return total_tokens
+
+def wait_for_server(model):
+    openai_api_key = "EMPTY"
+    openai_api_base = "http://localhost:8000/v1"
+    client = OpenAI(
+        api_key=openai_api_key,
+        base_url=openai_api_base,
+    )
+
+    # Loop until the server is up
+    while True:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": "Say 'Hello'"}],
+                max_tokens=10
+            )
+            print("Server is up and running!")
+            print("Response:", response.choices[0].message.content)
+            break  # Exit the loop if the server is up
+        except Exception as e:
+            print("Server is not responding, retrying in 5 seconds...")
+            time.sleep(20)  # Wait for 5 seconds before retrying
